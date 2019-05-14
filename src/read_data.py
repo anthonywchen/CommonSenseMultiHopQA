@@ -1,8 +1,8 @@
 import os
 import cPickle as pickle
-#import pickle
 import time
 import csv
+from jsonlines import Reader
 import random
 import itertools
 import nltk
@@ -111,6 +111,9 @@ class DataSet(object):
             idx_slice = idx[i * batch_size : (i+1) * batch_size]
             yield self.get_by_idxs(idx_slice, batch_size, pad_to_full_batch)
 
+####################
+# Utility Functions
+####################
 def get_stop_words(total_words, num_stop_words):
     fdist = FreqDist(total_words)
     stop_words = fdist.most_common(num_stop_words)
@@ -307,29 +310,6 @@ def filter_tfidf(ques, paragraphs, stop_words):
     sorted_ix = np.lexsort(([x[0] for x in paragraphs], dist))
     return [paragraphs[i] for i in sorted_ix[:n_to_select]] 
 
-def create_processed_wikihop_dataset_cs(config):
-    train_path = os.path.join(config.data_dir, 'wikihop',
-            'train.json')
-    dev_path = os.path.join(config.data_dir, 'wikihop',
-            'dev.json')
-
-    print("train file: " + train_path)
-    print("dev file: " + dev_path)
-
-    stop_words = ['the', ',', '.', 'of', 'and', 'in', 'is', 'a', 'to', ')', '(', "''", '``', 'as', 'by', 'it', 'was', 'or', 'with', 'on', 'an', 'for', "'s", 'from', 'are', 'its', 'city', 'that', 'which', 'also']
-
-    train_data = read_wikihop_data_wcs(train_path,
-            config.commonsense_file,
-            config.max_context_iterations,
-            stop_words,
-            config.tfidf_layer)
-    dev_data = read_wikihop_data_wcs(dev_path,
-            config.commonsense_file,
-            config.max_context_iterations,
-            stop_words,
-            config.tfidf_layer)
-    return train_data, dev_data
-
 def get_total_words(summaries, qaps_file):
     total_words = []
     with open(qaps_file, 'rb') as csvfile:
@@ -346,7 +326,45 @@ def get_total_words(summaries, qaps_file):
     total_words = list(total_words)
     return total_words
 
-def create_processed_dataset(config, data_type):
+####################
+# Dataset Creation Functions
+####################
+def create_processed_msmarco_dataset(config, data_type):
+    if data_type == 'train':
+        data_input_path = os.path.join(config.data_dir, 'train_v2.1.json')
+    elif data_type == 'valid':
+        data_input_path = os.path.join(config.data_dir, 'dev_v2.1.json')
+        
+    for line in Reader(open(data_input_path)): # The entire data file is in one line
+        break
+
+    data_list = []
+    for key in line['query'].keys():
+        ques = line['query'][key]
+        summary = ' '.join([s['passage_text'] for s in line['passages'][key]])
+        short_ans = line['answers'][key]
+        well_formed_ans = line['wellFormedAnswers'][key] if line['wellFormedAnswers'][key] != '[]' else []
+        
+        ans = short_ans + well_formed_ans
+        ans = [a for a in ans if a != '']    
+        
+        if u'No Answer Present.' in ans or ans == []: # skip questions with no answers
+            continue
+            
+        # Tokenize text
+        ques = nltk.word_tokenize(ques.lower())
+        summary = nltk.word_tokenize(summary.lower())
+        ans = [nltk.word_tokenize(a.lower()) for a in ans]
+        
+        data_pt = {'doc_num': key, \
+                   'summary': summary, \
+                   'ques': ques, \
+                   'ans': ans}
+        data_list.append(data_pt)
+    
+    return data_list
+
+def create_processed_nqa_dataset(config, data_type):
     debug = config.debug
     data_summary_path = os.path.join(
             config.data_dir, 'third_party', 'wikipedia', 'summaries.csv')
@@ -374,8 +392,6 @@ def create_processed_dataset(config, data_type):
     stop_words = get_stop_words(total_words, config.num_stop_words)
         
     data_list = []
-    data_idx = 0
-
     with open(data_input_path, 'rb') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL, skipinitialspace=True)
         next(spamreader)
@@ -405,8 +421,6 @@ def create_processed_dataset(config, data_type):
 
             data_list.append(data_pt)
 
-            data_idx += 1
-
     if config.load_commonsense:
         print("Building commonsense...")
         for i in tqdm(range(len(data_list))):
@@ -419,6 +433,55 @@ def create_processed_dataset(config, data_type):
         print("Done!")
 
     return data_list
+
+def create_processed_wikihop_dataset_cs(config):
+    train_path = os.path.join(config.data_dir, 'wikihop',
+            'train.json')
+    dev_path = os.path.join(config.data_dir, 'wikihop',
+            'dev.json')
+
+    print("train file: " + train_path)
+    print("dev file: " + dev_path)
+
+    stop_words = ['the', ',', '.', 'of', 'and', 'in', 'is', 'a', 'to', ')', '(', "''", '``', 'as', 'by', 'it', 'was', 'or', 'with', 'on', 'an', 'for', "'s", 'from', 'are', 'its', 'city', 'that', 'which', 'also']
+
+    train_data = read_wikihop_data_wcs(train_path,
+            config.commonsense_file,
+            config.max_context_iterations,
+            stop_words,
+            config.tfidf_layer)
+    dev_data = read_wikihop_data_wcs(dev_path,
+            config.commonsense_file,
+            config.max_context_iterations,
+            stop_words,
+            config.tfidf_layer)
+    return train_data, dev_data
+
+####################
+# Dataset I/O Functions
+####################
+def save_msmarco_processed_dataset(config, data, data_type):
+    if data_type == 'train':
+        path = config.processed_dataset_train
+    elif data_type == 'valid':
+        path = config.processed_dataset_valid
+
+    with open(path, 'wb') as f:
+        for data_pt in data:
+            f.write(json.dumps(data_pt) + '\n')
+
+def save_nqa_processed_dataset(config, data, data_type):
+    if data_type == 'train':
+        path = config.processed_dataset_train
+    elif data_type == 'valid':
+        path = config.processed_dataset_valid
+    elif data_type == 'test':
+        path = config.processed_dataset_test
+
+
+    with open(path, 'wb') as f:
+        for data_pt in data:
+            f.write(json.dumps(data_pt) + '\n')
 
 def save_wikihop_processed_dataset(config, data, data_type):
     if data_type == 'train':
@@ -435,19 +498,6 @@ def save_wikihop_processed_dataset(config, data, data_type):
                 f.write(json.dumps(data_pt) + '\n')
             except UnicodeDecodeError:
                 continue
-
-def save_processed_dataset(config, data, data_type):
-    if data_type == 'train':
-        path = config.processed_dataset_train
-    elif data_type == 'valid':
-        path = config.processed_dataset_valid
-    elif data_type == 'test':
-        path = config.processed_dataset_test
-
-
-    with open(path, 'wb') as f:
-        for data_pt in data:
-            f.write(json.dumps(data_pt) + '\n')
 
 def load_processed_dataset(config, data_type):
     if data_type == 'train':

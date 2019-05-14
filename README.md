@@ -37,11 +37,21 @@ and put it in the folder `data`.
 
 ## Build Processed Datasets
 
-We need to build processed datasets with extracted commonsense information. For
-NarrativeQA, we run:
+We need to build processed datasets. 
+
+For MS Marco (without commonsense information), we run:
 ```
 python src/config.py \
-    --mode build_dataset \
+    --mode build_msmarco_dataset \
+    --data_dir raw_data/msmarco \
+    --processed_dataset_train data/msmarco_train.jsonl \
+    --processed_dataset_valid data/msmarco_valid.jsonl \
+```
+
+For NarrativeQA (with commonsense information), we run:
+```
+python src/config.py \
+    --mode build_nqa_dataset \
     --data_dir raw_data/narrativeqa \
     --load_commonsense \
     --commonsense_file data/cn_relations_orig.txt \
@@ -50,7 +60,7 @@ python src/config.py \
     --processed_dataset_test data/narrative_qa_test.jsonl
 ```
 
-To build processed datasets with extracted commonsense for WikiHop, we run:
+For WikiHop (with commonsense information), we run:
 ```
 python src/config.py \
     --mode build_wikihop_dataset \
@@ -119,7 +129,7 @@ python src/config.py \
     --version {commonsense_nqa, baseline_nqa} \
     --model_name <model_name> \
     --use_ckpt <ckpt_name> \
-    --use_test \ # only use this flag if you want to evaluate on test set
+    --use_dev False \ # Set this to False to evaluate on test set, set to True to evaluate on dev set
     --processed_dataset_train data/narrative_qa_train.jsonl \
     --processed_dataset_valid data/narrative_qa_valid.jsonl \
     --processed_dataset_test data/narrative_qa_test.jsonl \

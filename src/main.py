@@ -32,7 +32,7 @@ sys.setdefaultencoding('utf-8')
 VALID_VERSIONS = ['baseline_nqa', 'commonsense_nqa', 'baseline_wh',
     'commonsense_wh']
 
-VALID_MODES = ['train', 'test', 'get-vocab', 'build_dataset', 'build_wikihop_dataset']
+VALID_MODES = ['train', 'test', 'get-vocab', 'build_msmarco_dataset', 'build_nqa_dataset', 'build_wikihop_dataset']
 
 def import_model(config):
     global UsedModel
@@ -62,8 +62,10 @@ def main(config):
         _test(config)
     elif config.mode == 'get-vocab':
         _print_vocab(config)
-    elif config.mode == 'build_dataset':
-        _build_datasets(config)
+    elif config.mode == 'build_msmarco_dataset':
+        _build_msmarco_datasets(config)
+    elif config.mode == 'build_nqa_dataset':
+        _build_nqa_datasets(config)
     elif config.mode == 'build_wikihop_dataset':
         _build_wikihop_datasets(config)
     elif config.mode == 'generate_answers':
@@ -79,14 +81,21 @@ def _print_vocab(config):
     for v in vocabs:
         print(v.encode('utf-8'))
 
-def _build_datasets(config):
-    train_data_processed = create_processed_dataset(config, 'train')
-    valid_data_processed = create_processed_dataset(config, 'valid')
-    test_data_processed = create_processed_dataset(config, 'test')
+def _build_msmarco_datasets(config):
+    train_data_processed = create_processed_msmarco_dataset(config, 'train')
+    valid_data_processed = create_processed_msmarco_dataset(config, 'valid')
 
-    save_processed_dataset(config, train_data_processed, 'train')
-    save_processed_dataset(config, valid_data_processed, 'valid')
-    save_processed_dataset(config, test_data_processed, 'test')
+    save_msmarco_processed_dataset(config, train_data_processed, 'train')
+    save_msmarco_processed_dataset(config, valid_data_processed, 'valid')
+
+def _build_nqa_datasets(config):
+    train_data_processed = create_processed_nqa_dataset(config, 'train')
+    valid_data_processed = create_processed_nqa_dataset(config, 'valid')
+    test_data_processed = create_processed_nqa_dataset(config, 'test')
+
+    save_nqa_processed_dataset(config, train_data_processed, 'train')
+    save_nqa_processed_dataset(config, valid_data_processed, 'valid')
+    save_nqa_processed_dataset(config, test_data_processed, 'test')
 
 def _build_wikihop_datasets(config):
     train_data_processed, dev_data_processed = create_processed_wikihop_dataset_cs(config)
