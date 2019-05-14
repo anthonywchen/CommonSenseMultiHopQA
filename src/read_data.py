@@ -330,11 +330,16 @@ def get_total_words(summaries, qaps_file):
 # Dataset Creation Functions
 ####################
 def create_processed_msmarco_dataset(config, data_type):
+    """ 
+        Processes the MS MARCO dataset. Each question may have more than one short or
+        well formed answer, so in the spirit of being consistent with the rest of the code
+        I only keep the first short and well formed answer (if they exist). 
+    """
     if data_type == 'train':
         data_input_path = os.path.join(config.data_dir, 'train_v2.1.json')
     elif data_type == 'valid':
         data_input_path = os.path.join(config.data_dir, 'dev_v2.1.json')
-        
+
     for line in Reader(open(data_input_path)): # The entire data file is in one line
         break
 
@@ -348,7 +353,7 @@ def create_processed_msmarco_dataset(config, data_type):
         ans = short_ans + well_formed_ans
         ans = [a for a in ans if a != '']    
         
-        if u'No Answer Present.' in ans or ans == []: # skip questions with no answers
+        if u'No Answer Present.' in short_ans or short_ans == []: # skip questions with no answers
             continue
             
         # Tokenize text
@@ -359,7 +364,11 @@ def create_processed_msmarco_dataset(config, data_type):
         data_pt = {'doc_num': key, \
                    'summary': summary, \
                    'ques': ques, \
-                   'ans': ans}
+                   'answer1': short_ans[0]}
+
+        if well_formed_ans != []: # Add well formed answer if it exists
+            data_pt['answer2'] = well_formed_ans[0]
+
         data_list.append(data_pt)
     
     return data_list
