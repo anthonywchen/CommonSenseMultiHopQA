@@ -112,7 +112,6 @@ def _train(config):
     relations_vocab = COMMONSENSE_REL_LOOKUP.values()
 
     valid_data = load_processed_dataset(config, 'valid')
-
     print("Data loaded!")
     vocab = GenModelVocab(vocab_freq, config.embedding_size,
             forced_word_list=relations_vocab,

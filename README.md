@@ -75,6 +75,20 @@ python src/config.py \
 
 ### Training
 
+To train models for MS Marco, run:
+```
+python src/config.py \
+    --version baseline_nqa \
+    --model_name <model_name> \
+    --processed_dataset_train data/msmarco_train.jsonl \
+    --processed_dataset_valid data/msmarco_valid.jsonl \
+    --elmo_token_embedding_file lm_data/msmarco/elmo_token_embeddings.hdf5 \
+    --elmo_vocab_file lm_data/msmarco/msmarco_vocab.txt \
+    --num_epochs 10 \
+    --batch_size 36 \
+    --dropout_rate 0.2
+```
+
 To train models for NarrativeQA, run:
 ```
 python src/config.py \

@@ -6,6 +6,7 @@ from jsonlines import Reader
 import random
 import itertools
 import nltk
+from sacremoses import MosesTokenizer
 import math
 import numpy as np
 import json
@@ -333,8 +334,11 @@ def create_processed_msmarco_dataset(config, data_type):
     """ 
         Processes the MS MARCO dataset. Each question may have more than one short or
         well formed answer, so in the spirit of being consistent with the rest of the code
-        I only keep the first short and well formed answer (if they exist). 
+        I only keep the first short and well formed answer (if they exist).
+
+        Use MosesTokenizer for this dataset. 
     """
+    mt = MosesTokenizer(lang='en')
     if data_type == 'train':
         data_input_path = os.path.join(config.data_dir, 'train_v2.1.json')
     elif data_type == 'valid':
@@ -346,28 +350,24 @@ def create_processed_msmarco_dataset(config, data_type):
     data_list = []
     for key in line['query'].keys():
         ques = line['query'][key]
-        summary = ' '.join([s['passage_text'] for s in line['passages'][key]])
+        # Extract passages only if they contain the answer
+        summary = ' '.join([p['passage_text'] for p in line['passages'][key] if p['is_selected']])
         short_ans = line['answers'][key]
         well_formed_ans = line['wellFormedAnswers'][key] if line['wellFormedAnswers'][key] != '[]' else []
         
-        ans = short_ans + well_formed_ans
-        ans = [a for a in ans if a != '']    
-        
-        if u'No Answer Present.' in short_ans or short_ans == []: # skip questions with no answers
+        if u'No Answer Present.' in short_ans or short_ans == [] or short_ans[0] == "" or summary == "": # skip questions with no answers
             continue
             
         # Tokenize text
-        ques = nltk.word_tokenize(ques.lower())
-        summary = nltk.word_tokenize(summary.lower())
-        ans = [nltk.word_tokenize(a.lower()) for a in ans]
+        ques = mt.tokenize(ques.lower())
+        summary = mt.tokenize(summary.lower())
         
         data_pt = {'doc_num': key, \
                    'summary': summary, \
                    'ques': ques, \
-                   'answer1': short_ans[0]}
-
+                   'answer1': mt.tokenize(short_ans[0].lower())}
         if well_formed_ans != []: # Add well formed answer if it exists
-            data_pt['answer2'] = well_formed_ans[0]
+            data_pt['answer2'] = mt.tokenize(well_formed_ans[0].lower())
 
         data_list.append(data_pt)
     
@@ -530,7 +530,6 @@ def load_processed_dataset(config, data_type):
             total_len = 0
 
             summ = []
-
             if isinstance(obj['summary'][0], list):
                 for doc in obj['summary']:
                     summ.extend(doc)
