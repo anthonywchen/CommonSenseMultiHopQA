@@ -62,6 +62,31 @@ For SocialQA (without commonsense information), we run:
 ```
 ```
 
+## Generating ELMo vocab and embeddings 
+The ELMo vocab file containing the vocabulary for each dataset and the associated ELMo word embeddings should be computed for each dataset before training. We can donwload the ELMo files for NarrativeQA but will have to generate the ELMo files for the other datasets.
+
+First download the pre-computed ELMo representation for NarrativeQA.  [here](https://drive.google.com/file/d/1pwzyEa0ogrXAMDmkFWOwH_eCSk8bP7ud/view), and extract into the folder `lm_data`. This contains the ELMo data for NarrativeQA. 
+
+To extract the ELMo files for the other datasets, run the following in the `lm_data` file. 
+```
+## For MSMarco
+    # Write vocabulary file
+    python src/write_vocabulary.py \
+        --processed_dataset_train   \
+        --processed_dataset_valid   \
+        --output_vocabulary \
+        --min_occurance
+    
+    # Generate ELMo embeddings
+    python src/write_elmo_embeddings.py \
+        --vocab_file \
+        --hdf5_output_file
+    
+## For SocialQA
+    # Write vocabulary file
+    # Generate ELMo embeddings
+```
+
 ## Training & Evaluation
 
 ### Training
@@ -77,6 +102,7 @@ python src/config.py \
     --elmo_vocab_file lm_data/msmarco/msmarco_vocab.txt \
     --num_epochs 8 \
     --batch_size 36 \
+    --dropout_rate 0.2
 ```
 
 To train models for NarrativeQA, run:
@@ -88,6 +114,7 @@ python src/config.py \
     --processed_dataset_valid data/narrative_qa_valid.jsonl \
     --batch_size 24 \
     --max_target_iterations 15 \
+    --dropout_rate 0.2 
 ```
 
 To train models for SocialQA, run:
@@ -122,8 +149,9 @@ python src/config.py \
     --processed_dataset_test data/narrative_qa_test.jsonl \
     --batch_size 24 \
     --max_target_iterations 15 \
+    --dropout_rate 0.2 
 ```
-which generates the output to a new file named `<model_name>\_preds.txt`. 
+which generates the output (a new file named <model_name>\_preds.txt). 
 
 To score the predictions performance with Rogue-L/BLEU/etc, run
 ```
@@ -139,7 +167,6 @@ python src/pycocoevalcap/bert_score/bert_scorer.py \
     --reference_file1 <ref0>
     --reference_file2 <ref1>
 ```
-
 ## ToDo 
 * Add in SocialQA dataset processing
 * Add in SocialQA training
