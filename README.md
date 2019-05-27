@@ -13,32 +13,26 @@ To use BERTScore, you also need use python3 and install the python packages in
 `python3_requirements.txt`
 
 ## Downloading Data
+First run `./setup.sh` to set up the directory structure. 
 
-First, to setup the directory structure, please run `setup.sh` to create the
-appropriate directories.
-
-We download the raw data for NarrativeQA and WikiHop. 
-
-For NarrativeQA, we download from github, starting at the root of the directory, run
+We download the raw data for NarrativeQA, MSMarco, and SocialQA into the `raw_data` directory. From the root of the directory, run
 ```
 cd raw_data
+
+# Download NarrativeQA
 git clone https://github.com/deepmind/narrativeqa.git
-```
+cd ../
 
-To download MSMarco, from the root of the directory, run
-```
-cd raw_data
+# Download MSMarco
 mkdir msmarco
 cd msmarco
 wget https://msmarco.blob.core.windows.net/msmarco/train_v2.1.json.gz
 wget https://msmarco.blob.core.windows.net/msmarco/dev_v2.1.json.gz
 gunzip -r train_v2.1.json.gz
 gunzip -r dev_v2.1.json.gz
-```
+cd ../
 
-To download SocialQA, from the root of the directory, run
-```
-cd raw_data
+# Download SocialQA
 ```
 
 ## Build Processed Datasets
@@ -64,6 +58,10 @@ python src/config.py \
     --processed_dataset_test data/narrative_qa_test.jsonl
 ```
 
+For SocialQA (without commonsense information), we run:
+```
+```
+
 ## Training & Evaluation
 
 ### Training
@@ -77,7 +75,7 @@ python src/config.py \
     --processed_dataset_valid data/msmarco_valid.jsonl \
     --elmo_token_embedding_file lm_data/msmarco/elmo_token_embeddings.hdf5 \
     --elmo_vocab_file lm_data/msmarco/msmarco_vocab.txt \
-    --num_epochs 10 \
+    --num_epochs 8 \
     --batch_size 36 \
     --dropout_rate 0.2
 ```
@@ -94,7 +92,12 @@ python src/config.py \
     --dropout_rate 0.2 
 ```
 
+To trian models for SocialQA, run:
+```
+```
+
 ### Evaluation
+We will demonstrate how to evaluate using NarrativeQA as an example, but the commands are analgous for the other dataset.
 
 To evaluate NarrativeQA, we need to first generate official answers on the test
 set. To do so, run:
@@ -106,16 +109,16 @@ python src/config.py \
 ```
 
 This will create the reference files `val_ref0.txt`, `val_ref1.txt`,
-`test_ref0.txt` and `test_ref1.txt`.
+`test_ref0.txt` and `test_ref1.txt`. 
 
-To evaluate a model on NarrativeQA, run:
+To generate predictions on the dev/test set using the trained model, run
 ```
 python src/config.py \
     --mode test \
     --version {commonsense_nqa, baseline_nqa} \
     --model_name <model_name> \
     --use_ckpt <ckpt_name> \
-    --use_dev False \ # Set this to False to evaluate on test set, set to True to evaluate on dev set
+    --use_dev False \ # False to evaluate test set, True to evaluate dev set.
     --processed_dataset_train data/narrative_qa_train.jsonl \
     --processed_dataset_valid data/narrative_qa_valid.jsonl \
     --processed_dataset_test data/narrative_qa_test.jsonl \
@@ -123,58 +126,32 @@ python src/config.py \
     --max_target_iterations 15 \
     --dropout_rate 0.2 
 ```
-which generates the output (a new file named <model_name>\_preds.txt). Then run
+which generates the output (a new file named <model_name>\_preds.txt). 
+
+To score the predictions performance with Rogue-L/BLEU/etc, run
 ```
 python src/eval_generation.py <ref0> <ref1> <output>
 ```
 where `ref0` and `ref1` are the generated reference files for the automatic
-metrics.
+metrics. This will also generate a file with the Rogue-L results. 
 
-## Download and Run Pre-Trained Models
-
-We release some pretrained models for both the NarrativeQA and WikiHop datasets.
-The results are listed below:
-
-**NarrativeQA**
-
-Model | Dev (R-L/B-1/B-4/M/C) | Test (R-L/B-1/B-4/M/C)
-------|------------------------------------------|--------------------
-Baseline|48.10/45.83/20.62/20.28/163.87|46.15/44.55/21.16/19.60/159.51
-Commonsense|51.70/49.28/23.18/22.17/179.13|50.15/48.44/24.01/21.76/178.95
-
-These NarrativeQA models resulted from further tuning after the paper's
-publication and have better performance than those presented in the paper.
-
-**WikiHop**
-
-Model | Dev Acc (%) | Test Acc (%)
-------|-------------|--------------
-Baseline|56.2%|57.5%
-Commonsense|58.5%|57.9%
-
-These WikiHop results are after tuning on the official/full WikiHop validation
-set, these numbers will appear in an upcoming arxiv update available
-[here](https://arxiv.org/abs/1809.06309).
-
-Download our pretrained models here:
-- [NarrativeQA Commonsense Model](https://drive.google.com/file/d/1V6G2sTvOiyEtsnVCBV34DzyhTCR58TXM/view)
-- [NarrativeQA Baseline Model](https://drive.google.com/file/d/1DsjrNB9z8J2n7oLecRTx3jjyMvHkCnoj/view)
-- [WikiHop Commonsense Model](https://drive.google.com/file/d/1ldJJ5cA0hthreC3v3Ux6l0cOFTMDvNHM/view)
-- [WikiHop Baseline Model](https://drive.google.com/file/d/1LlgH1gaK96MApg5wsfVCg3LTq_N0_3C8/view)
-
-Download and extract them to the `out` repo, and see above for how to evaluate
-these models.
+To generate a file with the BERTScore results, first activate the python3 environment. Then run
+```
+python src/pycocoevalcap/bert_score/bert_scorer.py \
+    --canidate_file <output>
+    --reference_file1 <ref0>
+    --reference_file2 <ref1>
+```
 
 ## ToDo 
 * Add in SocialQA dataset processing
 * Add in SocialQA training
-* Clean README, getting read of unncessary info and adding in how to create ELMo embeddings, etc. 
+* Clean README, adding in how to create ELMo embeddings, etc. 
 * Also write out BLEU score file
 * Script to merge in predictions, metric score, and original data file for easier transferrability
 * Create paraphrase detection model to use as additional metric. 
 
 ## Bibtex
-
 ```
 @inproceedings{bauerwang2019commonsense,
   title={Commonsense for Generative Multi-Hop Question Answering Tasks},
