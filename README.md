@@ -9,31 +9,37 @@ This repository contains the code and setup instructions for our EMNLP 2018 pape
 We trained our models with python 2 and TensorFlow 1.3, a full list of python
 packages is listed in `requirements.txt`
 
+To use BERTScore, you also need use python3 and install the python packages in 
+`python3_requirements.txt`
+
 ## Downloading Data
 
 First, to setup the directory structure, please run `setup.sh` to create the
 appropriate directories.
 
-We download the raw data for NarrativeQA and WikiHop. For NarrativeQA, we
-download from github, starting at the root of the directory, run
+We download the raw data for NarrativeQA and WikiHop. 
+
+For NarrativeQA, we download from github, starting at the root of the directory, run
 ```
 cd raw_data
 git clone https://github.com/deepmind/narrativeqa.git
 ```
 
-For WikiHop, we download the QAngaroo dataset
-[here](https://drive.google.com/file/d/1ytVZ4AhubFDOEL7o7XrIRIyhU8g9wvKA/view),
-and extract the zip file into the `raw_data` directory.
+To download MSMarco, from the root of the directory, run
+```
+cd raw_data
+mkdir msmarco
+cd msmarco
+wget https://msmarco.blob.core.windows.net/msmarco/train_v2.1.json.gz
+wget https://msmarco.blob.core.windows.net/msmarco/dev_v2.1.json.gz
+gunzip -r train_v2.1.json.gz
+gunzip -r dev_v2.1.json.gz
+```
 
-We use pre-computed ELMo representations. Download our pre-computed ELMo
-representation
-[here](https://drive.google.com/file/d/1pwzyEa0ogrXAMDmkFWOwH_eCSk8bP7ud/view),
-and extract into the folder `lm_data`.
-
-We also use a local version of ConceptNet's relations. Download the relations
-file from
-[here](https://drive.google.com/file/d/14nb2lM_KrWReSHlEaXVg9KE1WrcAV2Lj/view)
-and put it in the folder `data`.
+To download SocialQA, from the root of the directory, run
+```
+cd raw_data
+```
 
 ## Build Processed Datasets
 
@@ -48,27 +54,14 @@ python src/config.py \
     --processed_dataset_valid data/msmarco_valid.jsonl \
 ```
 
-For NarrativeQA (with commonsense information), we run:
+For NarrativeQA (without commonsense information), we run:
 ```
 python src/config.py \
     --mode build_nqa_dataset \
     --data_dir raw_data/narrativeqa \
-    --load_commonsense \
-    --commonsense_file data/cn_relations_orig.txt \
     --processed_dataset_train data/narrative_qa_train.jsonl \
     --processed_dataset_valid data/narrative_qa_valid.jsonl \
     --processed_dataset_test data/narrative_qa_test.jsonl
-```
-
-For WikiHop (with commonsense information), we run:
-```
-python src/config.py \
-    --mode build_wikihop_dataset \
-    --data_dir raw_data/qangaroo_v1.1 \
-    --load_commonsense \
-    --commonsense_file data/cn_relations_orig.txt \
-    --processed_dataset_train data/wikihop_train.jsonl \
-    --processed_dataset_valid data/wikihop_valid.jsonl 
 ```
 
 ## Training & Evaluation
@@ -99,27 +92,6 @@ python src/config.py \
     --batch_size 24 \
     --max_target_iterations 15 \
     --dropout_rate 0.2 
-```
-
-To train models for WikiHop, run:
-```
-python src/config.py \
-    --version {commonsense_wh, baseline_wh} \
-    --model_name <model_name> \
-    --elmo_options_file lm_data/wh/elmo_2x4096_512_2048cnn_2xhighway_options.json \
-    --elmo_weight_file lm_data/wh/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5 \
-    --elmo_token_embedding_file lm_data/wh/elmo_token_embeddings.hdf5 \
-    --elmo_vocab_file lm_data/wh/wikihop_vocab.txt \
-    --processed_dataset_train data/wikihop_train.jsonl \
-    --processed_dataset_valid data/wikihop_valid.jsonl \
-    --multiple_choice \
-    --max_target_iterations 4 \
-    --max_iterations 8 \
-    --batch_size 16 \
-    --max_target_iterations 4 \
-    --max_iterations 8 \
-    --max_context_iterations 1300 \
-    --dropout_rate 0.2
 ```
 
 ### Evaluation
@@ -158,31 +130,6 @@ python src/eval_generation.py <ref0> <ref1> <output>
 where `ref0` and `ref1` are the generated reference files for the automatic
 metrics.
 
-To evaluate a model on WikiHop, run:
-```
-python src/config.py \
-    --mode test \
-    --version {commonsense_wh, baseline_wh} \
-    --model_name <model_name> \
-    --use_ckpt <ckpt_name> \
-    --elmo_options_file lm_data/wh/elmo_2x4096_512_2048cnn_2xhighway_options.json \
-    --elmo_weight_file lm_data/wh/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5 \
-    --elmo_token_embedding_file lm_data/wh/elmo_token_embeddings.hdf5 \
-    --elmo_vocab_file lm_data/wh/wikihop_vocab.txt \
-    --processed_dataset_train data/wikihop_train.jsonl \
-    --processed_dataset_valid data/wikihop_valid.jsonl \
-    --multiple_choice \
-    --max_target_iterations 4 \
-    --max_iterations 8 \
-    --batch_size 16 \
-    --max_target_iterations 4 \
-    --max_iterations 8 \
-    --max_context_iterations 1300 \
-    --dropout_rate 0.2 
-```
-This outputs the test accuracy and generates an output file containing the
-model's predictions.
-
 ## Download and Run Pre-Trained Models
 
 We release some pretrained models for both the NarrativeQA and WikiHop datasets.
@@ -217,6 +164,14 @@ Download our pretrained models here:
 
 Download and extract them to the `out` repo, and see above for how to evaluate
 these models.
+
+## ToDo 
+* Add in SocialQA dataset processing
+* Add in SocialQA training
+* Clean README, getting read of unncessary info and adding in how to create ELMo embeddings, etc. 
+* Also write out BLEU score file
+* Script to merge in predictions, metric score, and original data file for easier transferrability
+* Create paraphrase detection model to use as additional metric. 
 
 ## Bibtex
 
