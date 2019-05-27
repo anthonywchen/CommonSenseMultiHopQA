@@ -9,9 +9,6 @@ flags.DEFINE_string("processed_dataset_valid", None, 'process dataset valid')
 flags.DEFINE_string("output_vocabulary", None, 'path to output vocabulary file')
 flags.DEFINE_string("min_occurance", 0, 'minimum number of occurances of a word to be included in the vocabulary')
 
-flags.DEFINE_string("multiple_choice", False, 'path to output vocabulary file')
-flags.DEFINE_integer('eval_num', -1, 'evaluate on subset of dev')
-
 def main(config):
 	# Read in vocabulary from training data
 	train_data = load_processed_dataset(config, 'train')

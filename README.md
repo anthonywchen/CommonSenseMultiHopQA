@@ -77,22 +77,20 @@ python src/config.py \
     --elmo_vocab_file lm_data/msmarco/msmarco_vocab.txt \
     --num_epochs 8 \
     --batch_size 36 \
-    --dropout_rate 0.2
 ```
 
 To train models for NarrativeQA, run:
 ```
 python src/config.py \
-    --version {commonsense_nqa, baseline_nqa} \
+    --version baseline_nqa \
     --model_name <model_name> \
     --processed_dataset_train data/narrative_qa_train.jsonl \
     --processed_dataset_valid data/narrative_qa_valid.jsonl \
     --batch_size 24 \
     --max_target_iterations 15 \
-    --dropout_rate 0.2 
 ```
 
-To trian models for SocialQA, run:
+To train models for SocialQA, run:
 ```
 ```
 
@@ -115,7 +113,7 @@ To generate predictions on the dev/test set using the trained model, run
 ```
 python src/config.py \
     --mode test \
-    --version {commonsense_nqa, baseline_nqa} \
+    --version baseline_nqa \
     --model_name <model_name> \
     --use_ckpt <ckpt_name> \
     --use_dev False \ # False to evaluate test set, True to evaluate dev set.
@@ -124,9 +122,8 @@ python src/config.py \
     --processed_dataset_test data/narrative_qa_test.jsonl \
     --batch_size 24 \
     --max_target_iterations 15 \
-    --dropout_rate 0.2 
 ```
-which generates the output (a new file named <model_name>\_preds.txt). 
+which generates the output to a new file named `<model_name>\_preds.txt`. 
 
 To score the predictions performance with Rogue-L/BLEU/etc, run
 ```
@@ -146,7 +143,7 @@ python src/pycocoevalcap/bert_score/bert_scorer.py \
 ## ToDo 
 * Add in SocialQA dataset processing
 * Add in SocialQA training
-* Clean README, adding in how to create ELMo embeddings, etc. 
+* Clean README, getting read of unncessary info and adding in how to create ELMo embeddings, etc. 
 * Also write out BLEU score file
 * Script to merge in predictions, metric score, and original data file for easier transferrability
 * Create paraphrase detection model to use as additional metric. 

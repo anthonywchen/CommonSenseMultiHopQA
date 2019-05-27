@@ -37,7 +37,7 @@ flags.DEFINE_integer("decoder_attn_size", 256, "Decoder attention size")
 flags.DEFINE_integer("num_layers_encoder", 1, "Encoder num layers")
 flags.DEFINE_integer("num_layers_decoder", 1, "Decoder num layers")
 
-flags.DEFINE_float("dropout_rate", 0.4, "Dropout")
+flags.DEFINE_float("dropout_rate", 0.2, "Dropout")
 flags.DEFINE_boolean("debug", False, "debug mode")
 flags.DEFINE_integer("min_occurence", 20,
     "minimum occurence to be counted in the vocab")
