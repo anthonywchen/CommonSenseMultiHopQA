@@ -158,15 +158,33 @@ To score the predictions performance with Rogue-L/BLEU/etc, run
 python src/eval_generation.py <ref0> <ref1> <output>
 ```
 where `ref0` and `ref1` are the generated reference files for the automatic
-metrics. This will also generate a file with the Rogue-L results. 
+metrics. This will also generate a files with sentence level scores for BLEU, 
+Rouge, Meteor, and Cider scores. 
+
 
 To generate a file with the BERTScore results, first activate the python3 environment. Then run
 ```
 python src/pycocoevalcap/bert_score/bert_scorer.py \
-    --canidate_file <output>
-    --reference_file1 <ref0>
+    --canidate_file <output> \
+    --reference_file1 <ref0> \
     --reference_file2 <ref1>
 ```
+
+Merge the data file, predictions file, and the different scoring files (of the test set)
+into one file for easy portability. Assume that `out/nqa_baseline` is the directory
+of the trained model, run
+```
+python merge_data_predictions_scores.py \
+    --data_file data/nqa/narrative_qa_test.jsonl \
+    --prediction_file out/nqa_baseline/test_preds.txt \
+    --bleu1_file out/nqa_baseline/test_preds.txt-bleu1.txt \
+    --bleu4_file out/nqa_baseline/test_preds.txt-bleu4.txt \
+    --rouge_file out/nqa_baseline/test_preds.txt-rougeL.txt \
+    --meteor_file out/nqa_baseline/test_preds.txt-meteor.txt \
+    --cider_file out/nqa_baseline/test_preds.txt-cider.txt \
+    --bert_score_file out/nqa_baseline/test_preds.txt-bert_score.txt
+```
+
 ## ToDo 
 * Script to merge in predictions, metric score, and original data file for easier transferrability
 * Add in SocialQA dataset processing
