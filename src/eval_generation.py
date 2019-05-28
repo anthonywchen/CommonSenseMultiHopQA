@@ -11,8 +11,9 @@ rouge_obj = Rouge()
 cider_obj = Cider()
 bleu_obj = Bleu(4)
 
-
-
+########################################
+### Load in reference answers and canidate answer
+########################################
 ref1 = argv[1]
 ref2 = argv[2]
 system = argv[3]
@@ -35,26 +36,15 @@ with open(system, 'r') as f:
     for line in f:
         sys_strs.append(line.strip())
 
-
 assert len(ref1_strs) == len(ref2_strs)
 assert len(ref2_strs) == len(sys_strs)
 
+########################################
+### Compute metric scores
+########################################
+
 word_target_dict = {}
 word_response_dict = {}
-
-rouges = []
-for i in range(len(ref1_strs)):
-    wtd = {i: [ref1_strs[i], ref2_strs[i]]}
-    wrd = {i: [sys_strs[i]]}
-    rouge, _ = rouge_obj.compute_score(wtd, wrd)
-
-    rouges.append(rouge)
-
-print(np.mean(rouges))
-
-with open("%s-rouges.txt" % system, 'w') as outf:
-    for r in rouges:
-        outf.write(str(r)+'\n')
 
 for i in range(len(ref1_strs)):
     word_target_dict[i] = [ref1_strs[i], ref2_strs[i]]
@@ -71,8 +61,40 @@ rouge_score, rouge_scores = rouge_obj.compute_score(
 cider_score, cider_scores = cider_obj.compute_score(
         word_target_dict, word_response_dict) 
 
+########################################
+### Write sentence level scores to file for each metric
+########################################
 print("ROUGE-L: ", rouge_score)
 print("BLEU-1: ", bleu1_score)
 print("BLEU-4: ", bleu4_score)
 print("METEOR: ", meteor_score)
-print("CiDER: ", cider_score)
+
+# Write Rogue-L score per sentence to file
+assert len(rouge_scores) == len(ref1_strs)
+with open("%s-rougeL.txt" % system, 'w') as outf:
+    for s in rouge_scores:
+        outf.write(str(s)+'\n')
+
+# Write BLEU-1 score per sentence to file
+assert len(bleu1_scores) == len(ref1_strs)
+with open("%s-bleu1.txt" % system, 'w') as outf:
+    for s in bleu1_scores:
+        outf.write(str(s)+'\n')
+
+# Write BLEU-4 score per sentence to file
+assert len(bleu4_scores) == len(ref1_strs)
+with open("%s-bleu4.txt" % system, 'w') as outf:
+    for s in bleu4_scores:
+        outf.write(str(s)+'\n')
+
+# Write METEOR score per sentence to file
+assert len(meteor_scores) == len(ref1_strs)
+with open("%s-meteor.txt" % system, 'w') as outf:
+    for s in meteor_scores:
+        outf.write(str(s)+'\n')
+
+# Write CIDER score per sentence to file
+assert len(cider_scores) == len(ref1_strs)
+with open("%s-cider.txt" % system, 'w') as outf:
+    for s in cider_scores:
+        outf.write(str(s)+'\n')

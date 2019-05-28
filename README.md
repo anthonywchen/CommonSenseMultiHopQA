@@ -44,8 +44,8 @@ For MS Marco (without commonsense information), we run:
 python src/config.py \
     --mode build_msmarco_dataset \
     --data_dir raw_data/msmarco \
-    --processed_dataset_train data/msmarco_train.jsonl \
-    --processed_dataset_valid data/msmarco_valid.jsonl \
+    --processed_dataset_train data/msmarco/msmarco_train.jsonl \
+    --processed_dataset_valid data/msmarco/msmarco_valid.jsonl \
 ```
 
 For NarrativeQA (without commonsense information), we run:
@@ -53,9 +53,9 @@ For NarrativeQA (without commonsense information), we run:
 python src/config.py \
     --mode build_nqa_dataset \
     --data_dir raw_data/narrativeqa \
-    --processed_dataset_train data/narrative_qa_train.jsonl \
-    --processed_dataset_valid data/narrative_qa_valid.jsonl \
-    --processed_dataset_test data/narrative_qa_test.jsonl
+    --processed_dataset_train data/nqa/narrative_qa_train.jsonl \
+    --processed_dataset_valid data/nqa/narrative_qa_valid.jsonl \
+    --processed_dataset_test data/nqa/narrative_qa_test.jsonl
 ```
 
 For SocialQA (without commonsense information), we run:
@@ -67,7 +67,7 @@ The ELMo vocab file containing the vocabulary for each dataset and the associate
 
 First download the pre-computed ELMo representation for NarrativeQA.  [here](https://drive.google.com/file/d/1pwzyEa0ogrXAMDmkFWOwH_eCSk8bP7ud/view), and extract into the folder `lm_data`. This contains the ELMo data for NarrativeQA. 
 
-To extract the ELMo files for the other datasets, run the following in the `lm_data` file. 
+To extract the ELMo files, run the following in the `lm_data` file. 
 ```
 ## For MSMarco
     # Write vocabulary file
@@ -75,12 +75,12 @@ To extract the ELMo files for the other datasets, run the following in the `lm_d
         --processed_dataset_train   \
         --processed_dataset_valid   \
         --output_vocabulary \
-        --min_occurance
+        --min_occurance # fill this in
     
     # Generate ELMo embeddings
     python src/write_elmo_embeddings.py \
         --vocab_file \
-        --hdf5_output_file
+        --hdf5_output_file fill this in. 
     
 ## For SocialQA
     # Write vocabulary file
@@ -134,7 +134,7 @@ python src/config.py \
 ```
 
 This will create the reference files `val_ref0.txt`, `val_ref1.txt`,
-`test_ref0.txt` and `test_ref1.txt`. 
+`test_ref0.txt` and `test_ref1.txt`. Move these files into the `data/nqa` directory. 
 
 To generate predictions on the dev/test set using the trained model, run
 ```
@@ -168,11 +168,10 @@ python src/pycocoevalcap/bert_score/bert_scorer.py \
     --reference_file2 <ref1>
 ```
 ## ToDo 
+* Script to merge in predictions, metric score, and original data file for easier transferrability
 * Add in SocialQA dataset processing
 * Add in SocialQA training
 * Clean README, getting read of unncessary info and adding in how to create ELMo embeddings, etc. 
-* Also write out BLEU score file
-* Script to merge in predictions, metric score, and original data file for easier transferrability
 * Create paraphrase detection model to use as additional metric. 
 
 ## Bibtex

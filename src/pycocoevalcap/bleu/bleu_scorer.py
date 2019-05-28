@@ -211,7 +211,7 @@ class BleuScorer(object):
         self._reflen = 0
         totalcomps = {'testlen':0, 'reflen':0, 'guess':[0]*n, 'correct':[0]*n}
 
-        # for each sentence
+        # for each sentence, compute BLEU score
         for comps in self.ctest:            
             testlen = comps['testlen']
             self._testlen += testlen
