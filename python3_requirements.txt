@@ -1,3 +1,3 @@
-# Python3 requirements file since bert_score needs python3
-
+# Python3 requirements file for python3 since we need Python3 for allennlp and bert_score
+allennlp==0.8.3
 bert_score==0.1.2

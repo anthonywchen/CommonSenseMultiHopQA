@@ -32,22 +32,22 @@ def bert_scorer(candidates_file, references_file1, references_file2=None):
 	"""
 
 	# Get BERTScore with respect to first reference file
-	cands_refs1_score = compute_reference_scores(candidates_file, references_file1)
+	cands_refs1_scores = compute_reference_scores(candidates_file, references_file1)
 
 	# Get BERTScore with respect to second reference file if second reference file exists
 	if references_file2:
-		cands_refs2_score = compute_reference_scores(candidates_file, references_file2)
+		cands_refs2_scores = compute_reference_scores(candidates_file, references_file2)
 		# Argmax over the scores from the two references file
-		assert len(cands_refs1_score) == len(cands_refs2_score)
-		cands_score = []
-		for s1, s2 in zip(cands_refs1_score, cands_refs2_score):
-		    cands_score.append(max(s1, s2))
+		assert len(cands_refs1_scores) == len(cands_refs2_scores)
+		cands_scores = []
+		for s1, s2 in zip(cands_refs1_scores, cands_refs2_scores):
+		    cands_scores.append(max(s1, s2))
 	else:
-		cands_score = cands_refs1_score
+		cands_scores = cands_refs1_scores
 
 	# Write the scores to file
 	with open(candidates_file + '-bert_score.txt', 'w') as f:
-		for c in cands_score:
+		for c in cands_scores:
 			f.write(str(c.item()) + '\n')
 
 if __name__ == '__main__':

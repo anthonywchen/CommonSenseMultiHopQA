@@ -165,16 +165,28 @@ Rouge, Meteor, and Cider scores.
 To generate a file with the BERTScore results, first activate the python3 environment. Then run
 ```
 python src/pycocoevalcap/bert_score/bert_scorer.py \
-    --canidate_file <output> \
-    --reference_file1 <ref0> \
-    --reference_file2 <ref1>
+    --candidates_file <output> \
+    --references_file1 <ref0> \
+    --references_file2 <ref1>
+```
+
+To generate a file with the paraphrase score with a model trained using the 
+`Paraphrase-Identification` repo, first activate the python3 environment. Then run
+```
+python src/pycocoevalcap/paraphrase_score/paraphrase_scorer.py \
+    --paraphrase_identification_repo <path to the paraphrase identification repository> \
+    --paraphrase_archive <path to the trained model archive in the parapharse identification repo> \
+    --candidates_file <output> \
+    --references_file1 <ref0> \
+    --references_file2 <ref1> \
+    --cuda_device [0, -1] # Set 0 to use first GPU, -1 for CPU
 ```
 
 Merge the data file, predictions file, and the different scoring files (of the test set)
 into one file for easy portability. Assume that `out/nqa_baseline` is the directory
 of the trained model, run
 ```
-python merge_data_predictions_scores.py \
+python src/merge_data_predictions_scores.py \
     --data_file data/nqa/narrative_qa_test.jsonl \
     --prediction_file out/nqa_baseline/test_preds.txt \
     --bleu1_file out/nqa_baseline/test_preds.txt-bleu1.txt \
@@ -182,11 +194,11 @@ python merge_data_predictions_scores.py \
     --rouge_file out/nqa_baseline/test_preds.txt-rougeL.txt \
     --meteor_file out/nqa_baseline/test_preds.txt-meteor.txt \
     --cider_file out/nqa_baseline/test_preds.txt-cider.txt \
-    --bert_score_file out/nqa_baseline/test_preds.txt-bert_score.txt
+    --bert_score_file out/nqa_baseline/test_preds.txt-bert_score.txt \
+    --paraphrase_score_file out/nqa_baseline/test_preds.txt-paraphrase_score.txt
 ```
 
 ## ToDo 
-* Script to merge in predictions, metric score, and original data file for easier transferrability
 * Add in SocialQA dataset processing
 * Add in SocialQA training
 * Clean README, getting read of unncessary info and adding in how to create ELMo embeddings, etc. 
