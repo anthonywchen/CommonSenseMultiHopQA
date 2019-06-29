@@ -1,17 +1,19 @@
-import os
-import cPickle as pickle
-import time
-import csv
-from jsonlines import Reader
-import random
-import itertools
-import nltk
-from sacremoses import MosesTokenizer
-import math
-import numpy as np
-import json
-
+from collections import defaultdict
 import copy
+import cPickle as pickle
+import csv
+import itertools
+from jsonlines import Reader
+import json
+import math
+import nltk
+import numpy as np
+import os
+import random
+from sacremoses import MosesTokenizer
+import time
+from tqdm import tqdm
+import xmltodict
 
 import multiprocessing as mp
 
@@ -21,11 +23,6 @@ from sklearn.metrics import pairwise_distances
 from commonsense_utils.graph import Commonsense_Graph
 from commonsense_utils.commonsense_data import COMMONSENSE_REL_LOOKUP
 
-from collections import defaultdict
-
-import random
-
-from tqdm import tqdm
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -33,7 +30,6 @@ import matplotlib.pyplot as plt
 import gc
 
 import commonsense_utils.general as CG
-
 from commonsense_utils.general import sample_relations
 
 
@@ -330,6 +326,51 @@ def get_total_words(summaries, qaps_file):
 ####################
 # Dataset Creation Functions
 ####################
+def create_processed_semeval_dataset(config, data_type):
+    """ 
+        Processes the SemEval-2018 Task 11 dataset. Each question only has one answer.
+        Use MosesTokenizer for this dataset. 
+    """
+    mt = MosesTokenizer(lang='en')
+    if data_type == 'train':
+        data_input_path = os.path.join(config.data_dir, 'train-data.xml')
+    elif data_type == 'valid':
+        data_input_path = os.path.join(config.data_dir, 'dev-data.xml')
+    
+    with open(data_input_path) as f:
+        data = xmltodict.parse(''.join(f.readlines()))
+
+    data_list = []
+    for instance in data['data']['instance']:
+        if instance['questions'] == None:
+            continue
+        raw_summary = instance['text']
+
+        # Make sure question_dicts is a list so we can iterate over it
+        question_dicts = instance['questions']['question']
+        question_dicts = question_dicts if type(question_dicts) == list else [question_dicts] 
+        for question_dict in question_dicts:
+            raw_question = question_dict['@text']
+            raw_answer1 = None
+            for answer_dict in question_dict['answer']:
+                if answer_dict['@correct']:
+                    raw_answer1 = answer_dict['@text']
+            
+            if raw_answer1 == False:
+                continue
+                
+            data_pt = {'raw_summary': raw_summary,
+                       'summary': mt.tokenize(raw_summary.lower()),
+                       'raw_ques': raw_question,
+                       'ques': mt.tokenize(raw_question.lower()),
+                       'raw_answer1': raw_answer1,
+                       'answer1': mt.tokenize(raw_answer1.lower())
+                      }
+            data_list.append(data_pt)
+    
+    return data_list
+
+
 def create_processed_msmarco_dataset(config, data_type):
     """ 
         Processes the MS MARCO dataset. Each question may have more than one short or
@@ -380,6 +421,7 @@ def create_processed_nqa_dataset(config, data_type):
     data_input_path = os.path.join(config.data_dir, 'qaps.csv')
     relations = CG.get_relations(config.commonsense_file)
 
+    raw_summaries = {}
     summaries = {}
 
     with open(data_summary_path, 'rb') as csvfile:
@@ -394,8 +436,8 @@ def create_processed_nqa_dataset(config, data_type):
                 continue
 
             doc_num = row[0]
-            tokenized_summary = nltk.word_tokenize(row[3].decode('ascii', 'ignore').encode('utf-8').lower())
-            summaries[doc_num] = tokenized_summary
+            raw_summaries[doc_num] = row[3].decode('ascii', 'ignore').encode('utf-8')
+            summaries[doc_num] = nltk.word_tokenize(raw_summaries[doc_num].lower())
 
     total_words = get_total_words(summaries, data_input_path)
     stop_words = get_stop_words(total_words, config.num_stop_words)
@@ -412,20 +454,26 @@ def create_processed_nqa_dataset(config, data_type):
 
 
             doc_num = row[0]
+            raw_summary = raw_summaries[doc_num]
+            raw_ques = row[2].decode('ascii','ignore').encode('utf-8')
+            raw_answ = row[3].decode('ascii','ignore').encode('utf-8')
+            raw_answ_2 = row[4].decode('ascii','ignore').encode('utf-8')
+
             summary = summaries[doc_num]
-            ques = nltk.word_tokenize(row[2].decode('ascii',
-                'ignore').encode('utf-8').lower())
-            answ = nltk.word_tokenize(row[3].decode('ascii',
-                'ignore').encode('utf-8').lower())
-            answ_2 = nltk.word_tokenize(row[4].decode('ascii',
-                'ignore').encode('utf-8').lower())
+            ques = nltk.word_tokenize(raw_ques.lower())
+            answ = nltk.word_tokenize(raw_answ.lower())
+            answ_2 = nltk.word_tokenize(raw_answ_2.lower())
 
             data_pt = {}
 
             data_pt['doc_num'] = doc_num
+            data_pt['raw_ques'] = raw_ques
             data_pt['ques'] = ques
+            data_pt['raw_answ'] = raw_answ
             data_pt['answer1'] = answ
+            data_pt['raw_answ_2'] = raw_answ_2
             data_pt['answer2'] = answ_2
+            data_pt['raw_summary'] = raw_summary
             data_pt['summary'] = summary
 
             data_list.append(data_pt)
@@ -469,6 +517,16 @@ def create_processed_wikihop_dataset_cs(config):
 ####################
 # Dataset I/O Functions
 ####################
+def save_semeval_processed_dataset(config, data, data_type):
+    if data_type == 'train':
+        path = config.processed_dataset_train
+    elif data_type == 'valid':
+        path = config.processed_dataset_valid
+
+    with open(path, 'wb') as f:
+        for data_pt in data:
+            f.write(json.dumps(data_pt) + '\n')
+
 def save_msmarco_processed_dataset(config, data, data_type):
     if data_type == 'train':
         path = config.processed_dataset_train

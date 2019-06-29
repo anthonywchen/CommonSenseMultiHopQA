@@ -32,7 +32,7 @@ sys.setdefaultencoding('utf-8')
 VALID_VERSIONS = ['baseline_nqa', 'commonsense_nqa', 'baseline_wh',
     'commonsense_wh']
 
-VALID_MODES = ['train', 'test', 'get-vocab', 'build_msmarco_dataset', 'build_nqa_dataset', 'build_wikihop_dataset']
+VALID_MODES = ['train', 'test', 'get-vocab',  'build_semeval_dataset', 'build_msmarco_dataset', 'build_nqa_dataset', 'build_wikihop_dataset']
 
 def import_model(config):
     global UsedModel
@@ -62,6 +62,8 @@ def main(config):
         _test(config)
     elif config.mode == 'get-vocab':
         _print_vocab(config)
+    elif config.mode == 'build_semeval_dataset':
+        _build_semeval_datasets(config)
     elif config.mode == 'build_msmarco_dataset':
         _build_msmarco_datasets(config)
     elif config.mode == 'build_nqa_dataset':
@@ -80,6 +82,15 @@ def _print_vocab(config):
     vocabs.update(valid_data.get_word_lists())
     for v in vocabs:
         print(v.encode('utf-8'))
+
+def _build_semeval_datasets(config):
+    print('Processing Training Set')
+    train_data_processed = create_processed_semeval_dataset(config, 'train')
+    print('Processing Dev Set')
+    valid_data_processed = create_processed_semeval_dataset(config, 'valid')
+
+    save_semeval_processed_dataset(config, train_data_processed, 'train')
+    save_semeval_processed_dataset(config, valid_data_processed, 'valid')
 
 def _build_msmarco_datasets(config):
     train_data_processed = create_processed_msmarco_dataset(config, 'train')

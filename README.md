@@ -15,7 +15,7 @@ To use BERTScore, you also need use python3 and install the python packages in
 ## Downloading Data
 First run `./setup.sh` to set up the directory structure. 
 
-We download the raw data for NarrativeQA, MSMarco, and SocialQA into the `raw_data` directory. From the root of the directory, run
+We download the raw data for NarrativeQA, MSMarco, and SemEval-2018 Task 11 into the `raw_data` directory. From the root of the directory, run
 ```
 cd raw_data
 
@@ -32,7 +32,13 @@ gunzip -r train_v2.1.json.gz
 gunzip -r dev_v2.1.json.gz
 cd ../
 
-# Download SocialQA
+# Download SemEval-2018 Task 11
+mkdir semeval
+cd semeval
+wget https://raw.githubusercontent.com/DungLe13/commonsense/master/data/train-data.xml
+wget https://raw.githubusercontent.com/DungLe13/commonsense/master/data/dev-data.xml
+cd ..
+
 ```
 
 ## Build Processed Datasets
@@ -58,8 +64,13 @@ python src/config.py \
     --processed_dataset_test data/nqa/narrative_qa_test.jsonl
 ```
 
-For SocialQA (without commonsense information), we run:
+For SemEval-2018 Task 11 (without commonsense information), we run:
 ```
+python src/config.py \
+    --mode build_semeval_dataset \
+    --data_dir raw_data/semeval \
+    --processed_dataset_train data/semeval/semeval_train.jsonl \
+    --processed_dataset_valid data/semeval/semeval_valid.jsonl
 ```
 
 ## Generating ELMo vocab and embeddings 
@@ -70,21 +81,29 @@ First download the pre-computed ELMo representation for NarrativeQA.  [here](htt
 To extract the ELMo files, run the following in the `lm_data` file. 
 ```
 ## For MSMarco
-    # Write vocabulary file
-    python src/write_vocabulary.py \
-        --processed_dataset_train   \
-        --processed_dataset_valid   \
-        --output_vocabulary \
-        --min_occurance # fill this in
+# Write vocabulary file
+python src/write_vocabulary.py \
+    --processed_dataset_train  data/msmarco/msmarco_train.jsonl \
+    --processed_dataset_valid   data/msmarco/msmarco_valid.jsonl \
+    --output_vocabulary  lm_data/msmarco/msmarco_vocab.txt 
+
+# Generate ELMo embeddings
+python src/write_elmo_embeddings.py \
+    --vocab_file lm_data/msmarco/msmarco_vocab.txt \
+    --hdf5_output_file lm_data/semeval/elmo_token_embeddings-msmarco.hdf5
     
-    # Generate ELMo embeddings
-    python src/write_elmo_embeddings.py \
-        --vocab_file \
-        --hdf5_output_file fill this in. 
-    
-## For SocialQA
-    # Write vocabulary file
-    # Generate ELMo embeddings
+## For SemEval-2018 Task 11
+# Write vocabulary file
+python src/write_vocabulary.py \
+    --processed_dataset_train  data/semeval/semeval_train.jsonl \
+    --processed_dataset_valid   data/semeval/semeval_valid.jsonl \
+    --output_vocabulary  lm_data/semeval/semeval_vocab.txt 
+
+# Generate ELMo embeddings
+python src/write_elmo_embeddings.py \
+    --vocab_file lm_data/semeval/semeval_vocab.txt \
+    --hdf5_output_file lm_data/semeval/elmo_token_embeddings-msmarco.hdf5
+
 ```
 
 ## Training & Evaluation
@@ -110,15 +129,24 @@ To train models for NarrativeQA, run:
 python src/config.py \
     --version baseline_nqa \
     --model_name <model_name> \
-    --processed_dataset_train data/narrative_qa_train.jsonl \
-    --processed_dataset_valid data/narrative_qa_valid.jsonl \
+    --processed_dataset_train data/nqa/narrative_qa_train.jsonl \
+    --processed_dataset_valid data/nqa/narrative_qa_valid.jsonl \
     --batch_size 24 \
     --max_target_iterations 15 \
     --dropout_rate 0.2 
 ```
 
-To train models for SocialQA, run:
+To train models for SemEval-2018 Task 11, run:
 ```
+python src/config.py \
+    --version baseline_nqa \
+    --model_name <model_name> \
+    --processed_dataset_train data/semeval/semeval_train.jsonl \
+    --processed_dataset_valid data/semeval/semeval_valid.jsonl \
+    --batch_size 32 \
+    --max_target_iterations 15 \
+    --num_epochs 12 \
+    --dropout_rate 0.2 
 ```
 
 ### Evaluation
