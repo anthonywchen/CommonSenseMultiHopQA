@@ -367,9 +367,10 @@ def _generate_answers(config):
         ref0.close()
         ref1.close()
 
-
-    val_data = load_processed_dataset(config, 'valid')
-    test_data = load_processed_dataset(config, 'test')
-
-    save_answers('val', val_data)
-    save_answers('test', test_data)
+    if config.processed_dataset_valid != None:
+        val_data = load_processed_dataset(config, 'valid')
+        save_answers('val', val_data)
+        
+    if config.processed_dataset_test != None:
+        test_data = load_processed_dataset(config, 'test')
+        save_answers('test', test_data)

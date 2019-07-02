@@ -404,6 +404,7 @@ class NarrativeQAGatedMultiBidafWithSelfAttnAndELMoCUDNN(BaseModel):
         self.saver.save(sess, path)
 
     def restore_from(self, sess, path):
+        print(path)
         if not self.graph_built:
             raise ValueError("Graph is not built yet!")
         if not self.train_op_added:

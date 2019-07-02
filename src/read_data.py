@@ -10,7 +10,6 @@ import nltk
 import numpy as np
 import os
 import random
-from sacremoses import MosesTokenizer
 import time
 from tqdm import tqdm
 import xmltodict
@@ -331,7 +330,6 @@ def create_processed_semeval_dataset(config, data_type):
         Processes the SemEval-2018 Task 11 dataset. Each question only has one answer.
         Use MosesTokenizer for this dataset. 
     """
-    mt = MosesTokenizer(lang='en')
     if data_type == 'train':
         data_input_path = os.path.join(config.data_dir, 'train-data.xml')
     elif data_type == 'valid':
@@ -360,16 +358,15 @@ def create_processed_semeval_dataset(config, data_type):
                 continue
                 
             data_pt = {'raw_summary': raw_summary,
-                       'summary': mt.tokenize(raw_summary.lower()),
+                       'summary': nltk.word_tokenize(raw_summary.lower()),
                        'raw_ques': raw_question,
-                       'ques': mt.tokenize(raw_question.lower()),
+                       'ques': nltk.word_tokenize(raw_question.lower()),
                        'raw_answer1': raw_answer1,
-                       'answer1': mt.tokenize(raw_answer1.lower())
+                       'answer1': nltk.word_tokenize(raw_answer1.lower())
                       }
             data_list.append(data_pt)
     
     return data_list
-
 
 def create_processed_msmarco_dataset(config, data_type):
     """ 
@@ -379,7 +376,6 @@ def create_processed_msmarco_dataset(config, data_type):
 
         Use MosesTokenizer for this dataset. 
     """
-    mt = MosesTokenizer(lang='en')
     if data_type == 'train':
         data_input_path = os.path.join(config.data_dir, 'train_v2.1.json')
     elif data_type == 'valid':
@@ -400,15 +396,15 @@ def create_processed_msmarco_dataset(config, data_type):
             continue
             
         # Tokenize text
-        ques = mt.tokenize(ques.lower())
-        summary = mt.tokenize(summary.lower())
+        ques = nltk.word_tokenize(ques.lower())
+        summary = nltk.word_tokenize(summary.lower())
         
         data_pt = {'doc_num': key, \
                    'summary': summary, \
                    'ques': ques, \
-                   'answer1': mt.tokenize(short_ans[0].lower())}
+                   'answer1': nltk.word_tokenize(short_ans[0].lower())}
         if well_formed_ans != []: # Add well formed answer if it exists
-            data_pt['answer2'] = mt.tokenize(well_formed_ans[0].lower())
+            data_pt['answer2'] = nltk.word_tokenize(well_formed_ans[0].lower())
 
         data_list.append(data_pt)
     

@@ -102,8 +102,7 @@ python src/write_vocabulary.py \
 # Generate ELMo embeddings
 python src/write_elmo_embeddings.py \
     --vocab_file lm_data/semeval/semeval_vocab.txt \
-    --hdf5_output_file lm_data/semeval/elmo_token_embeddings-msmarco.hdf5
-
+    --hdf5_output_file lm_data/semeval/elmo_token_embeddings-semeval.hdf5
 ```
 
 ## Training & Evaluation
@@ -117,7 +116,7 @@ python src/config.py \
     --model_name <model_name> \
     --processed_dataset_train data/msmarco_train.jsonl \
     --processed_dataset_valid data/msmarco_valid.jsonl \
-    --elmo_token_embedding_file lm_data/msmarco/elmo_token_embeddings.hdf5 \
+    --elmo_token_embedding_file lm_data/msmarco/elmo_token_embeddings-msmarco.hdf5 \
     --elmo_vocab_file lm_data/msmarco/msmarco_vocab.txt \
     --num_epochs 8 \
     --batch_size 36 \
@@ -131,6 +130,8 @@ python src/config.py \
     --model_name <model_name> \
     --processed_dataset_train data/nqa/narrative_qa_train.jsonl \
     --processed_dataset_valid data/nqa/narrative_qa_valid.jsonl \
+    --elmo_token_embedding_file lm_data/nqa/elmo_token_embeddings-nqa.hdf5 \
+    --elmo_vocab_file lm_data/nqa/narrative_qa_vocab.txt \
     --batch_size 24 \
     --max_target_iterations 15 \
     --dropout_rate 0.2 
@@ -143,9 +144,12 @@ python src/config.py \
     --model_name <model_name> \
     --processed_dataset_train data/semeval/semeval_train.jsonl \
     --processed_dataset_valid data/semeval/semeval_valid.jsonl \
+    --elmo_token_embedding_file lm_data/semeval/elmo_token_embeddings-semeval.hdf5 \
+    --elmo_vocab_file lm_data/semeval/semeval_vocab.txt \
     --batch_size 32 \
     --max_target_iterations 15 \
     --num_epochs 12 \
+    --checkpoint_size 200 \
     --dropout_rate 0.2 
 ```
 
@@ -157,8 +161,8 @@ set. To do so, run:
 ```
 python src/config.py \
     --mode generate_answers \
-    --processed_dataset_valid data/narrative_qa_valid.jsonl \
-    --processed_dataset_test data/narrative_qa_test.jsonl 
+    --processed_dataset_valid data/nqa/narrative_qa_valid.jsonl \
+    --processed_dataset_test data/nqa/narrative_qa_test.jsonl 
 ```
 
 This will create the reference files `val_ref0.txt`, `val_ref1.txt`,
@@ -170,8 +174,8 @@ python src/config.py \
     --mode test \
     --version baseline_nqa \
     --model_name <model_name> \
-    --use_ckpt <ckpt_name> \
-    --use_dev False \ # False to evaluate test set, True to evaluate dev set.
+    --use_ckpt <ckpt_name> # Don't include the extension \
+    --use_dev False  # False to evaluate test set, True to evaluate dev set. \
     --processed_dataset_train data/narrative_qa_train.jsonl \
     --processed_dataset_valid data/narrative_qa_valid.jsonl \
     --processed_dataset_test data/narrative_qa_test.jsonl \
@@ -198,18 +202,6 @@ python src/pycocoevalcap/bert_score/bert_scorer.py \
     --references_file2 <ref1>
 ```
 
-To generate a file with the paraphrase score with a model trained using the 
-`Paraphrase-Identification` repo, first activate the python3 environment. Then run
-```
-python src/pycocoevalcap/paraphrase_score/paraphrase_scorer.py \
-    --paraphrase_identification_repo <path to the paraphrase identification repository> \
-    --paraphrase_archive <path to the trained model archive in the parapharse identification repo> \
-    --candidates_file <output> \
-    --references_file1 <ref0> \
-    --references_file2 <ref1> \
-    --cuda_device [0, -1] # Set 0 to use first GPU, -1 for CPU
-```
-
 Merge the data file, predictions file, and the different scoring files (of the test set)
 into one file for easy portability. Assume that `out/nqa_baseline` is the directory
 of the trained model, run
@@ -227,10 +219,7 @@ python src/merge_data_predictions_scores.py \
 ```
 
 ## ToDo 
-* Add in SocialQA dataset processing
-* Add in SocialQA training
 * Clean README, getting read of unncessary info and adding in how to create ELMo embeddings, etc. 
-* Create paraphrase detection model to use as additional metric. 
 
 ## Bibtex
 ```
