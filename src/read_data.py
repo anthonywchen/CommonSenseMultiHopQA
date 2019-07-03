@@ -339,25 +339,27 @@ def create_processed_semeval_dataset(config, data_type):
         data = xmltodict.parse(''.join(f.readlines()))
 
     data_list = []
-    for instance in data['data']['instance']:
+    for instance_id, instance in enumerate(data['data']['instance']):
         if instance['questions'] == None:
             continue
         raw_summary = instance['text']
-
+    
         # Make sure question_dicts is a list so we can iterate over it
         question_dicts = instance['questions']['question']
         question_dicts = question_dicts if type(question_dicts) == list else [question_dicts] 
-        for question_dict in question_dicts:
+        for question_id, question_dict in enumerate(question_dicts):
+            doc_num = str(instance_id) + '_' + str(question_id)
             raw_question = question_dict['@text']
             raw_answer1 = None
             for answer_dict in question_dict['answer']:
-                if answer_dict['@correct']:
+                if answer_dict['@correct'] == "True":
                     raw_answer1 = answer_dict['@text']
             
             if raw_answer1 == False:
                 continue
                 
-            data_pt = {'raw_summary': raw_summary,
+            data_pt = {'doc_num': doc_num,
+                       'raw_summary': raw_summary,
                        'summary': nltk.word_tokenize(raw_summary.lower()),
                        'raw_ques': raw_question,
                        'ques': nltk.word_tokenize(raw_question.lower()),
@@ -432,8 +434,8 @@ def create_processed_nqa_dataset(config, data_type):
                 continue
 
             doc_num = row[0]
-            raw_summaries[doc_num] = row[3].decode('ascii', 'ignore').encode('utf-8')
-            summaries[doc_num] = nltk.word_tokenize(raw_summaries[doc_num].lower())
+            raw_summaries[doc_num] = row[2]
+            summaries[doc_num] = nltk.word_tokenize(row[3].decode('ascii', 'ignore').encode('utf-8').lower())
 
     total_words = get_total_words(summaries, data_input_path)
     stop_words = get_stop_words(total_words, config.num_stop_words)
@@ -544,7 +546,7 @@ def save_nqa_processed_dataset(config, data, data_type):
 
     with open(path, 'wb') as f:
         for data_pt in data:
-            f.write(json.dumps(data_pt) + '\n')
+            f.write(json.dumps(data_pt,ensure_ascii=False).encode('utf-8') + '\n')
 
 def save_wikihop_processed_dataset(config, data, data_type):
     if data_type == 'train':

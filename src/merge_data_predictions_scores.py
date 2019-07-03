@@ -2,7 +2,6 @@
 	Merges the data files, prediction files, and scoring files (BLEU, ROUGE, etc) into one JSON file for 
 	easy portability and manipulation
 """
-
 import argparse
 from json import dumps
 from jsonlines import Reader

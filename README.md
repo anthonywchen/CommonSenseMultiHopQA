@@ -214,8 +214,7 @@ python src/merge_data_predictions_scores.py \
     --rouge_file out/nqa_baseline/test_preds.txt-rougeL.txt \
     --meteor_file out/nqa_baseline/test_preds.txt-meteor.txt \
     --cider_file out/nqa_baseline/test_preds.txt-cider.txt \
-    --bert_score_file out/nqa_baseline/test_preds.txt-bert_score.txt \
-    --paraphrase_score_file out/nqa_baseline/test_preds.txt-paraphrase_score.txt
+    --bert_score_file out/nqa_baseline/test_preds.txt-bert_score.txt 
 ```
 
 ## ToDo 
