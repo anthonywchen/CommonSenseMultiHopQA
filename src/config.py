@@ -45,7 +45,7 @@ flags.DEFINE_boolean("start_eval", False, 'start w/ an eval')
 flags.DEFINE_integer("sample", -1, '# of batches to use in eval, -1 means all')
 flags.DEFINE_integer("to_print_nums", 0,
     'how many examples to display, -1 means all of them')
-flags.DEFINE_boolean("use_dev", True, "evaluate on dev set")
+flags.DEFINE_string("data_type", None, "data type to use for generating predictions. Options are 'train', 'valid', and 'test'")
 flags.DEFINE_integer("re_eval_step", 1,
     "steps in re-evaluation, default is 1, i.e., reval all")
 flags.DEFINE_boolean("show_eval_progress", True, "Show progress of eval")

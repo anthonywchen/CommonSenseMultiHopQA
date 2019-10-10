@@ -15,7 +15,7 @@ To use BERTScore, you also need use python3 and install the python packages in
 ## Downloading Data
 First run `./setup.sh` to set up the directory structure. 
 
-We download the raw data for NarrativeQA, MSMarco, and SemEval-2018 Task 11 into the `raw_data` directory. From the root of the directory, run
+We download the raw data for NarrativeQA, MSMarco, and MCScript into the `raw_data` directory. From the root of the directory, run
 ```
 cd raw_data
 
@@ -32,12 +32,12 @@ gunzip -r train_v2.1.json.gz
 gunzip -r dev_v2.1.json.gz
 cd ../
 
-# Download SemEval-2018 Task 11
-mkdir semeval
-cd semeval
-wget https://raw.githubusercontent.com/DungLe13/commonsense/master/data/train-data.xml
-wget https://raw.githubusercontent.com/DungLe13/commonsense/master/data/dev-data.xml
-cd ..
+# Download MCScript
+wget https://my.hidrive.com/api/sharelink/download?id=DhAhE8B5
+unzip 'download?id=DhAhE8B5'
+rm 'download?id=DhAhE8B5'
+rm -r __MACOSX
+mv MCScript mcscript
 
 ```
 
@@ -64,13 +64,15 @@ python src/config.py \
     --processed_dataset_test data/nqa/narrative_qa_test.jsonl
 ```
 
-For SemEval-2018 Task 11 (without commonsense information), we run:
+For MCSCript (without commonsense information), we run:
 ```
 python src/config.py \
-    --mode build_semeval_dataset \
-    --data_dir raw_data/semeval \
-    --processed_dataset_train data/semeval/semeval_train.jsonl \
-    --processed_dataset_valid data/semeval/semeval_valid.jsonl
+    --mode build_mcscript_dataset \
+    --data_dir raw_data/mcscript \
+    --processed_dataset_train data/mcscript/mcscript_train.jsonl \
+    --processed_dataset_valid data/mcscript/mcscript_valid.jsonl \
+    --processed_dataset_test  data/mcscript/mcscript_test.jsonl
+
 ```
 
 ## Generating ELMo vocab and embeddings 
@@ -90,19 +92,19 @@ python src/write_vocabulary.py \
 # Generate ELMo embeddings
 python src/write_elmo_embeddings.py \
     --vocab_file lm_data/msmarco/msmarco_vocab.txt \
-    --hdf5_output_file lm_data/semeval/elmo_token_embeddings-msmarco.hdf5
+    --hdf5_output_file lm_data/msmarco/elmo_token_embeddings-msmarco.hdf5
     
-## For SemEval-2018 Task 11
+## For mcscript
 # Write vocabulary file
 python src/write_vocabulary.py \
-    --processed_dataset_train  data/semeval/semeval_train.jsonl \
-    --processed_dataset_valid   data/semeval/semeval_valid.jsonl \
-    --output_vocabulary  lm_data/semeval/semeval_vocab.txt 
+    --processed_dataset_train  data/mcscript/mcscript_train.jsonl \
+    --processed_dataset_valid  data/mcscript/mcscript_valid.jsonl \
+    --output_vocabulary  lm_data/mcscript/mcscript_vocab.txt 
 
 # Generate ELMo embeddings
 python src/write_elmo_embeddings.py \
-    --vocab_file lm_data/semeval/semeval_vocab.txt \
-    --hdf5_output_file lm_data/semeval/elmo_token_embeddings-semeval.hdf5
+    --vocab_file lm_data/mcscript/mcscript_vocab.txt \
+    --hdf5_output_file lm_data/mcscript/elmo_token_embeddings-mcscript.hdf5
 ```
 
 ## Training & Evaluation
@@ -137,15 +139,15 @@ python src/config.py \
     --dropout_rate 0.2 
 ```
 
-To train models for SemEval-2018 Task 11, run:
+To train models for MCScript, run:
 ```
 python src/config.py \
     --version baseline_nqa \
     --model_name <model_name> \
-    --processed_dataset_train data/semeval/semeval_train.jsonl \
-    --processed_dataset_valid data/semeval/semeval_valid.jsonl \
-    --elmo_token_embedding_file lm_data/semeval/elmo_token_embeddings-semeval.hdf5 \
-    --elmo_vocab_file lm_data/semeval/semeval_vocab.txt \
+    --processed_dataset_train data/mcscript/mcscript_train.jsonl \
+    --processed_dataset_valid data/mcscript/mcscript_valid.jsonl \
+    --elmo_token_embedding_file lm_data/mcscript/elmo_token_embeddings-mcscript.hdf5 \
+    --elmo_vocab_file lm_data/mcscript/mcscript_vocab.txt \
     --batch_size 32 \
     --max_target_iterations 15 \
     --num_epochs 12 \
@@ -169,16 +171,17 @@ This will create the reference files `val_ref0.txt`, `val_ref1.txt`,
 `test_ref0.txt` and `test_ref1.txt`. Move these files into the `data/nqa` directory. 
 
 To generate predictions on the dev/test set using the trained model, run
+without the extension for the ckpt
 ```
 python src/config.py \
     --mode test \
     --version baseline_nqa \
     --model_name <model_name> \
-    --use_ckpt <ckpt_name> # Don't include the extension \
-    --use_dev False  # False to evaluate test set, True to evaluate dev set. \
-    --processed_dataset_train data/narrative_qa_train.jsonl \
-    --processed_dataset_valid data/narrative_qa_valid.jsonl \
-    --processed_dataset_test data/narrative_qa_test.jsonl \
+    --use_ckpt <ckpt_name> \
+    --data_type <train, dev, test> \
+    --processed_dataset_train data/nqa/narrative_qa_train.jsonl \
+    --processed_dataset_valid data/nqa/narrative_qa_valid.jsonl \
+    --processed_dataset_test data/nqa/narrative_qa_test.jsonl \
     --batch_size 24 \
     --max_target_iterations 15 \
     --dropout_rate 0.2 

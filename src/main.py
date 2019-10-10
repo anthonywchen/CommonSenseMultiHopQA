@@ -29,10 +29,7 @@ import sys
 reload(sys)
 sys.setdefaultencoding('utf-8')
 
-VALID_VERSIONS = ['baseline_nqa', 'commonsense_nqa', 'baseline_wh',
-    'commonsense_wh']
-
-VALID_MODES = ['train', 'test', 'get-vocab',  'build_semeval_dataset', 'build_msmarco_dataset', 'build_nqa_dataset', 'build_wikihop_dataset']
+VALID_VERSIONS = ['baseline_nqa', 'commonsense_nqa', 'baseline_wh', 'commonsense_wh']
 
 def import_model(config):
     global UsedModel
@@ -62,8 +59,8 @@ def main(config):
         _test(config)
     elif config.mode == 'get-vocab':
         _print_vocab(config)
-    elif config.mode == 'build_semeval_dataset':
-        _build_semeval_datasets(config)
+    elif config.mode == 'build_mcscript_dataset':
+        _build_mcscript_datasets(config)
     elif config.mode == 'build_msmarco_dataset':
         _build_msmarco_datasets(config)
     elif config.mode == 'build_nqa_dataset':
@@ -83,14 +80,17 @@ def _print_vocab(config):
     for v in vocabs:
         print(v.encode('utf-8'))
 
-def _build_semeval_datasets(config):
+def _build_mcscript_datasets(config):
     print('Processing Training Set')
-    train_data_processed = create_processed_semeval_dataset(config, 'train')
+    train_data_processed = create_processed_mcscript_dataset(config, 'train')
     print('Processing Dev Set')
-    valid_data_processed = create_processed_semeval_dataset(config, 'valid')
+    valid_data_processed = create_processed_mcscript_dataset(config, 'valid')
+    print('Processing Test Set')
+    test_data_processed  = create_processed_mcscript_dataset(config, 'test')
 
-    save_semeval_processed_dataset(config, train_data_processed, 'train')
-    save_semeval_processed_dataset(config, valid_data_processed, 'valid')
+    save_mcscript_processed_dataset(config, train_data_processed, 'train')
+    save_mcscript_processed_dataset(config, valid_data_processed, 'valid')
+    save_mcscript_processed_dataset(config, test_data_processed, 'test')
 
 def _build_msmarco_datasets(config):
     train_data_processed = create_processed_msmarco_dataset(config, 'train')
@@ -295,12 +295,17 @@ def _test(config):
         raise Exception("Not valid output directory! No vocab found!")
 
     print("Vocab built! Size (%d)" % vocab.size())
-
-    if config.use_dev:
+    if config.data_type == 'train':
+        print("Using training")
+        valid_data = load_processed_dataset(config, 'train')
+    elif config.data_type == 'valid':
+        print("Using validation")
         valid_data = load_processed_dataset(config, 'valid')
-    else:
+    elif config.data_type == 'test':
         print("Using test!")
         valid_data = load_processed_dataset(config, 'test')
+    else:
+        raise ValueError("Invalid Data Type for Evaluation")
 
     if config.shuffle_cs:
         valid_data = shuffle_cs(valid_data)
@@ -332,13 +337,6 @@ def _test(config):
         bleu1, bleu4, meteor, rouge, cider, eval_loss, preds = eval_dataset(
                 config, valid_data, vocab, model, sess)
 
-        #print("Result for %s" % config.use_ckpt)
-        #print("Bleu1: ", bleu1)
-        #print("Bleu4: ", bleu4)
-        #print("Meteor: ", meteor)
-        #print("Rouge-L: ", rouge)
-        #print("CIDEr: ", cider)
-
         filename = config.model_name + '_preds.txt'
         with open(filename, 'w') as pred_file:
             for p in preds:
@@ -366,6 +364,10 @@ def _generate_answers(config):
 
         ref0.close()
         ref1.close()
+
+    if config.processed_dataset_train != None:
+        train_data = load_processed_dataset(config, 'train')
+        save_answers('train', train_data)
 
     if config.processed_dataset_valid != None:
         val_data = load_processed_dataset(config, 'valid')

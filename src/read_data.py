@@ -325,15 +325,17 @@ def get_total_words(summaries, qaps_file):
 ####################
 # Dataset Creation Functions
 ####################
-def create_processed_semeval_dataset(config, data_type):
+def create_processed_mcscript_dataset(config, data_type):
     """ 
-        Processes the SemEval-2018 Task 11 dataset. Each question only has one answer.
+        Processes the MCScript dataset. Each question only has one answer.
         Use MosesTokenizer for this dataset. 
     """
     if data_type == 'train':
         data_input_path = os.path.join(config.data_dir, 'train-data.xml')
     elif data_type == 'valid':
         data_input_path = os.path.join(config.data_dir, 'dev-data.xml')
+    elif data_type == 'test':
+        data_input_path = os.path.join(config.data_dir, 'test-data.xml')
     
     with open(data_input_path) as f:
         data = xmltodict.parse(''.join(f.readlines()))
@@ -515,11 +517,13 @@ def create_processed_wikihop_dataset_cs(config):
 ####################
 # Dataset I/O Functions
 ####################
-def save_semeval_processed_dataset(config, data, data_type):
+def save_mcscript_processed_dataset(config, data, data_type):
     if data_type == 'train':
         path = config.processed_dataset_train
     elif data_type == 'valid':
         path = config.processed_dataset_valid
+    elif data_type == 'test':
+        path = config.processed_dataset_test
 
     with open(path, 'wb') as f:
         for data_pt in data:
